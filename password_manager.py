@@ -4,86 +4,120 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-def check_master_password(imposter):
+# Get the hash or initialize one if it doesn't exist
+def get_hash():
 
-    # Create digest of imposter
+    # Check if hash exists
+    try:
+        hash_file = open("hash.txt", "r")
+        hash = hash_file.readline()
+        hash_file.close()
+    except:
+
+        # Get master password
+        master_password = input("A master password does not seem to exist. Create a password: ")
+        master_password = master_password.encode("ASCII")
+
+        # Create a hash of the master password
+        master_password_hash = hashes.Hash(hashes.SHA3_256())
+        master_password_hash.update(master_password)
+        hash = master_password_hash.finalize()
+
+        # Write the hash to a file
+        hash_file = open("hash.txt", "w")
+        hash_file.write(str(hash))
+        hash_file.close()
+
+        print("Master key successfully created!")
+    
+    return hash
+
+
+# Get the salt or initialize one if it is not made yet
+def get_salt():
+
+    try:
+        salt_file = open("salt.txt", "r")
+        salt = salt_file.readline().encode("ASCII")
+        salt_file.close()
+    except:
+        salt_file = open("salt.txt", "w")
+        salt = os.urandom(16)
+        salt_file.write(str(salt))
+        salt_file.close()
+
+    return salt
+
+# Checks the given password against known master password
+def check_master_password(imposter, hash):
+
+    # Create hash of imposter
     imposter_hash = hashes.Hash(hashes.SHA3_256())
     imposter_hash.update(imposter)
-    imposter_digest = str(imposter_hash.finalize())
+    imposter_hash = str(imposter_hash.finalize())
 
-    # Get known master password hash
-    master_password_file = open("master_password.txt", "r")
-    master_password_digest = master_password_file.readline()
-    master_password_file.close()
-
-    if imposter_digest == master_password_digest:
+    if imposter_hash == hash:
         return True
     else:
         return False
 
+# Derive a key using the master password
+def derive_key(master_password, salt):
 
-master_password_file = open("master_password.txt", "r")
-check_empty = master_password_file.readline()
-master_password_file.close()
-
-if check_empty == None or check_empty == "":
-
-    # Get master password
-    master_password = input("Create a password:")
-    master_password = master_password.encode("ASCII")
-
-    # Create a hash of the master password
-    master_password_hash = hashes.Hash(hashes.SHA3_256())
-    master_password_hash.update(master_password)
-    master_password_digest = master_password_hash.finalize()
-
-    # Write the master password hash to a file
-    master_password_file = open("master_password.txt", "w")
-    master_password_file.write(str(master_password_digest))
-    master_password_file.close()
-    
-else:
-
-    # Check if returning password is valid
-    imposter = input("What is the password? ")
-    auth = check_master_password(imposter.encode("ASCII"))
-
-
-
-# Code for key stuff
-'''
-salt = os.urandom(16)
-
-kdf = PBKDF2HMAC(
-    algorithm=hashes.SHA256(),
-    length=32,
-    salt=salt,
-    iterations=480000,
-)
-
-kdf_key = kdf.derive(master_password)
-
-try:
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
         salt=salt,
         iterations=480000,
     )
-    kdf.verify(b"test", kdf_key)
-except:
-    print("invalid password")
+
+    kdf_key = kdf.derive(master_password)
+    key = base64.urlsafe_b64encode(kdf_key)
+
+    return key
 
 
-key = base64.urlsafe_b64encode(kdf_key)
+def main():
 
-f = Fernet(key)
+    hash = get_hash()
 
-token = f.encrypt(b"Secret message!")
+    # Check if given password is valid
+    master_password = input("What is the master password? ").encode("ASCII")
+    auth = check_master_password(master_password, hash)
+    if auth:
+        print("Success!")
+    else:
+        print("That password is incorrect.")
+        exit()
+    
+    # Code for key stuff
 
-print(token)
+    salt = get_salt()
 
-d_token = f.decrypt(token)
+    master_key = derive_key(master_password, salt)
 
-print(d_token)
+    f = Fernet(master_key)
+
+    token = f.encrypt(b"Secret message!")
+
+    print(token)
+
+    d_token = f.decrypt(token)
+
+    print(d_token)
+
+    # Verify key, needed...?
+    '''
+    try:
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=480000,
+        )
+        kdf.verify(b"test", kdf_key)
+    except:
+        print("invalid password")
 '''
+
+main()
