@@ -21,6 +21,7 @@ def get_hash():
         # Create a hash of the master password
         master_password_hash = hashes.Hash(hashes.SHA3_256())
         master_password_hash.update(master_password)
+        del master_password
         hash = master_password_hash.finalize()
 
         # Write the hash to a file
@@ -28,7 +29,7 @@ def get_hash():
         hash_file.write(str(hash))
         hash_file.close()
 
-        print("Master key successfully created!")
+        print("Master key successfully created! Please login now.")
     
     return hash
 
@@ -77,6 +78,44 @@ def derive_key(master_password, salt):
     return key
 
 
+def get_account(fernet):
+    
+
+    return 0
+
+
+def add_account(master_password):
+    account_name = input("What account would you like to add? ")
+    account_pass = input("What password would you like to use for this account? ").encode("ASCII")
+
+    # Initialize encryption
+    try:
+        salt = get_salt()
+        key = derive_key(master_password, salt)
+        fernet = Fernet(key)
+        del key
+    except:
+        print("Failed")
+        return 0
+
+    try:
+        accounts = open("accounts.txt", "a")
+        token = fernet.encrypt(account_pass)
+        accounts.write("{} {}\n".format(account_name, token))
+        del token
+        print("Successfully added account!")
+    except:
+        print("failed")
+        return 0
+
+    return 1
+
+
+def del_account():
+
+    return 0
+
+
 def main():
 
     hash = get_hash()
@@ -89,22 +128,34 @@ def main():
     else:
         print("That password is incorrect.")
         exit()
+
+    action = input("What would you like to do?\n\
+          [r] get the password for an account\n\
+          [w] add an account and password\n\
+          [d] delete an account and password\n")
     
-    # Code for key stuff
+    match action:
+        case "r":
+            get_account(master_password)
+        case "w":
+            add_account(master_password)
+        case "d":
+            del_account()
+        case _:
+            print("Action does not exist or no action was given")
 
-    salt = get_salt()
+    # encrypt/decrypt
+    '''
 
-    master_key = derive_key(master_password, salt)
-
-    f = Fernet(master_key)
-
-    token = f.encrypt(b"Secret message!")
+    token = fernet.encrypt(b"Secret message!")
 
     print(token)
 
-    d_token = f.decrypt(token)
+    d_token = fernet.decrypt(token)
 
     print(d_token)
+
+    '''
 
     # Verify key, needed...?
     '''
