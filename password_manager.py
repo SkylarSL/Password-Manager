@@ -78,10 +78,38 @@ def derive_key(master_password, salt):
     return key
 
 
-def get_account(fernet):
-    
+def get_account(master_password):
+    print("Here is a list of your current accounts:\n")
+    accounts = open("accounts.txt", "r")
+    accounts_list = accounts.readlines()
+    account_pairs = {}
+    for account in accounts_list:
+        pair = account.split(" ")
+        name = pair[0]
+        token = (pair[1])[:-1]
+        account_pairs[name] = token
 
-    return 0
+    chosen_account = input("\nWhat account would you like to access? ")
+
+    # Initialize decryption
+    try:
+        salt = get_salt()
+        key = derive_key(master_password, salt)
+        fernet = Fernet(key)
+        del key
+    except:
+        print("Failed")
+        return 0
+
+    try:
+        account_pass = fernet.decrypt(account_pairs[chosen_account].encode("ASCII"))
+    except:
+        print("Failed")
+        return 0
+
+    print("Here is the password for {}: {}".format(chosen_account, account_pass.decode("ASCII")))
+
+    return 1
 
 
 def add_account(master_password):
@@ -101,11 +129,12 @@ def add_account(master_password):
     try:
         accounts = open("accounts.txt", "a")
         token = fernet.encrypt(account_pass)
-        accounts.write("{} {}\n".format(account_name, token))
+        accounts.write("{} {}\n".format(account_name, token.decode("ASCII")))
+        accounts.close()
         del token
         print("Successfully added account!")
     except:
-        print("failed")
+        print("Failed")
         return 0
 
     return 1
