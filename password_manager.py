@@ -4,6 +4,42 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+# Initialize the files
+def initialize():
+
+    print("Since this is your first time using Vult we will start by initializing files...")
+
+    # Initialize the salt file
+    salt_file = open("salt.txt", "w")
+    salt = os.urandom(16)
+    salt_file.write(str(salt))
+    salt_file.close()
+    print("Salt file created!")
+
+    # Initialize accounts file
+    tmp = open("accounts.txt.", "x")
+    tmp.close()
+    print("Accounts file created!")
+
+    # Initialize the hash file
+    # Get master password
+    master_password = input("Create a master password: ")
+    master_password = master_password.encode("ASCII")
+
+    # Create a hash of the master password
+    master_password_hash = hashes.Hash(hashes.SHA3_256())
+    master_password_hash.update(master_password)
+    del master_password
+    hash = master_password_hash.finalize()
+
+    # Write the hash to the hash file
+    hash_file = open("hash.txt", "w")
+    hash_file.write(str(hash))
+    del hash
+    hash_file.close()
+    print("Master key successfully created!")
+    print("Please login now...")
+
 # Get the hash or initialize one if it doesn't exist
 def get_hash():
 
@@ -13,23 +49,7 @@ def get_hash():
         hash = hash_file.readline()
         hash_file.close()
     except:
-
-        # Get master password
-        master_password = input("A master password does not seem to exist. Create a password: ")
-        master_password = master_password.encode("ASCII")
-
-        # Create a hash of the master password
-        master_password_hash = hashes.Hash(hashes.SHA3_256())
-        master_password_hash.update(master_password)
-        del master_password
-        hash = master_password_hash.finalize()
-
-        # Write the hash to a file
-        hash_file = open("hash.txt", "w")
-        hash_file.write(str(hash))
-        hash_file.close()
-
-        print("Master key successfully created! Please login now.")
+        print("Failed")
     
     return hash
 
@@ -42,10 +62,7 @@ def get_salt():
         salt = salt_file.readline().encode("ASCII")
         salt_file.close()
     except:
-        salt_file = open("salt.txt", "w")
-        salt = os.urandom(16)
-        salt_file.write(str(salt))
-        salt_file.close()
+        print("Failed")
 
     return salt
 
@@ -86,7 +103,9 @@ def get_account(master_password):
     for account in accounts_list:
         pair = account.split(" ")
         name = pair[0]
+        print(name)
         token = (pair[1])[:-1]
+        print(token)
         account_pairs[name] = token
 
     chosen_account = input("\nWhat account would you like to access? ")
@@ -101,12 +120,7 @@ def get_account(master_password):
         print("Failed")
         return 0
 
-    try:
-        account_pass = fernet.decrypt(account_pairs[chosen_account].encode("ASCII"))
-    except:
-        print("Failed")
-        return 0
-
+    account_pass = fernet.decrypt(account_pairs[chosen_account].encode("ASCII"))
     print("Here is the password for {}: {}".format(chosen_account, account_pass.decode("ASCII")))
 
     return 1
@@ -147,10 +161,31 @@ def del_account():
 
 def main():
 
+    print("Welcome to Vult!")
+
+    # Check if things need to be initialized
+    try:
+        tmp = open("hash.txt", "r")
+        tmp.close()
+        tmp = open("accounts.txt", "r")
+        tmp.close()
+        tmp = open("salt.txt", "r")
+        tmp.close()
+    except:
+        initialize_check = input("You seem to be missing necessary files. Is this your first time using Vult? [yes/no] ")
+        match initialize_check:
+            case "yes":
+                initialize()
+            case "no":
+                # Debug here
+                print("I don't know what to do yet :(")
+                exit()
+
+    # Get the hash
     hash = get_hash()
 
     # Check if given password is valid
-    master_password = input("What is the master password? ").encode("ASCII")
+    master_password = input("What is your master password? ").encode("ASCII")
     auth = check_master_password(master_password, hash)
     if auth:
         print("Success!")
