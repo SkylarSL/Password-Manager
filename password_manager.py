@@ -99,13 +99,13 @@ def get_account(master_password):
     print("Here is a list of your current accounts:\n")
     accounts = open("accounts.txt", "r")
     accounts_list = accounts.readlines()
+    accounts.close()
     account_pairs = {}
     for account in accounts_list:
         pair = account.split(" ")
         name = pair[0]
         print(name)
         token = (pair[1])[:-1]
-        print(token)
         account_pairs[name] = token
 
     chosen_account = input("\nWhat account would you like to access? ")
@@ -155,6 +155,31 @@ def add_account(master_password):
 
 
 def del_account():
+    print("Here is a list of your current accounts:\n")
+    accounts = open("accounts.txt", "r")
+    accounts_list = accounts.readlines()
+    accounts.close()
+    account_pairs = {}
+    for account in accounts_list:
+        pair = account.split(" ")
+        name = pair[0]
+        print(name)
+        token = (pair[1])[:-1]
+        account_pairs[name] = token
+
+    chosen_account = input("\nWhat account would you like to delete? ")
+    account_pairs.pop(chosen_account)
+
+    accounts = open("accounts.txt", "w")
+    accounts_list = accounts.write("")
+    accounts.close()
+    accounts = open("accounts.txt", "a")
+    for account, token in account_pairs.items():
+        accounts.write("{} {}\n".format(account, token))
+    accounts.close()
+    del account_pairs
+
+    print("Successfully deleted {} account!".format(chosen_account))
 
     return 0
 
@@ -207,19 +232,6 @@ def main():
             del_account()
         case _:
             print("Action does not exist or no action was given")
-
-    # encrypt/decrypt
-    '''
-
-    token = fernet.encrypt(b"Secret message!")
-
-    print(token)
-
-    d_token = fernet.decrypt(token)
-
-    print(d_token)
-
-    '''
 
     # Verify key, needed...?
     '''
