@@ -1,5 +1,6 @@
 import base64
 import os
+import sys
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -14,11 +15,13 @@ def initialize():
     salt = os.urandom(16)
     salt_file.write(str(salt))
     salt_file.close()
+    #os.chmod("salt.txt", 0o644)
     print("Salt file created!")
 
     # Initialize accounts file
     tmp = open("accounts.txt.", "x")
     tmp.close()
+    #os.chmod("accounts.txt", 0o644)
     print("Accounts file created!")
 
     # Initialize the hash file
@@ -37,6 +40,7 @@ def initialize():
     hash_file.write(str(hash))
     del hash
     hash_file.close()
+    #os.chmod("hash.txt", 0o644)
     print("Master key successfully created!")
     print("Please login now...")
 
@@ -205,6 +209,46 @@ def main():
                 # Debug here
                 print("I don't know what to do yet :(")
                 exit()
+
+    # Code to turn Vult into an argument based commandline
+    '''
+    manual = " Vult <masterpassword> -<command> <account> <accountpassword> ...\
+        <masterpassword>, the password used to authenticate Vult usage \
+        -<command>, actions for accounts \
+            -g/get, get a password for an account (requires account name) \
+            -a/add, add an account (requires account name and corresponding password) \
+            -d/del, delete an account (requires account name) \
+        <account>, specify an account you want to perform an action on \
+        <accountpassword>, specify the password for the corresponding account \
+    "
+
+    if len(sys.argv) != 3:
+        exit()
+    master_password = str(sys.argv[1])
+    for i in range(2, len(sys.argv)):
+        command = sys.argv[i]
+        if command == "-g" or command == "-get":
+            try:
+                account = sys.argv[i+1]
+            except:
+                print("No account specified to get.")
+                exit()
+            get_account()
+        elif command == "a" or command == "-add":
+            try:
+                account = sys.argv[i+1]
+            except:
+                print("No account specified to add.")
+                exit()
+            add_account()
+        elif command == "d" or command == "-del":
+            try:
+                account = sys.argv[i+1]
+            except:
+                print("No account specified to delete.")
+                exit()
+            del_account()
+    '''
 
     # Get the hash
     hash = get_hash()
