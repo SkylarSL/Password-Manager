@@ -1,3 +1,7 @@
+# local files for functionality
 hash.txt
 salt.txt
 accounts.txt
+
+# command script for Windows
+vult.bat

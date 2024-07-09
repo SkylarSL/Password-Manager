@@ -44,7 +44,7 @@ def initialize():
     print("Master key successfully created!")
     print("Please login now...")
 
-# Get the hash or initialize one if it doesn't exist
+# Get the hash
 def get_hash():
 
     # Check if hash exists
@@ -58,7 +58,7 @@ def get_hash():
     return hash
 
 
-# Get the salt or initialize one if it is not made yet
+# Get the salt
 def get_salt():
 
     try:
@@ -262,9 +262,9 @@ def main():
         print("That password is incorrect.")
         exit()
 
-    action = input("What would you like to do?\n\
-          [r] get the password for an account\n\
-          [w] add an account and password\n\
+    action = input("What would you like to do?\n \
+          [r] get the password for an account\n \
+          [w] add an account and password\n \
           [d] delete an account and password\n")
     
     match action:
